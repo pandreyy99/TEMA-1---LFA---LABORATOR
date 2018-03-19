@@ -17,10 +17,10 @@ using namespace std;
 AFN::AFN()
 {
     ///ctor
-    StareInit = -1 ;
-    nrchr = 0 ;
-    nrstf = 0 ;
-    chr[nrchr] = '\0' ;
+    stareInit = -1 ;
+    nrChr = 0 ;
+    nrStF = 0 ;
+    chr[nrChr] = '\0' ;
     ///StareFin = new vector < list < int > >;
 }
 
@@ -28,116 +28,133 @@ AFN::AFN( const AFN& other )
 {
     ///copy ctor
     if(this != &other){
-        StareInit = other.StareInit ;
-        nrchr = other.nrchr ;
+        stareInit = other.stareInit ;
+        nrChr = other.nrChr ;
         strcpy(chr , other.chr);
-        nrstf = other.nrstf ;
-        StareFin.resize(nrstf + 1);
-        StareFin = other.StareFin ;
+        nrStF = other.nrStF ;
+        stareFin.resize(nrStF + 1);
+        stareFin = other.stareFin ;
     }
 }
 
 AFN::~AFN()
 {
     ///dtor
-    StareInit = -1 ;
-    nrchr = 0 ;
-    nrstf = 0 ;
+    stareInit = -1 ;
+    nrChr = 0 ;
+    nrStF = 0 ;
 }
 
-void citire_automat( AFN *&T , int &n , int &q , int *&StF , int &nr )
-{   int i , j , x ;
-    ifstream f( "C:\\Users\\Andrei\\Desktop\\C-lion\\LFA\\cmake-build-debug\\automat.ini" ) ;
-    /**cout << "Dati starea initiala : " ;
-    cin >> i ;*/
-    f >> i ;
-    q = i ;
-    /**cout << '\n' << "Dati nr de stari finale : " ;
-    cin >> i ;*/
-    f >> i ;
-    nr = i ;
-    StF = new int[nr+1] ;
-    ///cout << '\n' << "Dati starile finale : " ;
-    for( i = 0 ; i < nr ; i++ ){
-        /**cout << '\n' << "Stare finala " << i+1 << " = " ;
-        cin >> StF[i] ;*/
-        f >> StF[i] ;
-    }
-    /**cout << '\n' << "Dati nr de stari : " ;
-    cin >> i ;*/
-    f >> i ;
-    n = i ;
-    T = new AFN[n+1] ;
-    for( i = 0 ; i < n ; i++ ){
-        T[i].StareInit = i+1 ;
-        /**cout << '\n' << "Dati nr de caractere cu care putem pleca din starea " << i+1<<" : " ;
-        cin >> T[i].nrchr ;*/
-        f >> T[i].nrchr ;
-        T[i].StareFin.resize(T[i].nrchr) ;
-        ///cout << '\n' << "Dati caracterele : " ;
-        for( j = 0 ; j < T[i].nrchr ; j++ ){
-            /**cout << '\n' << "Caracterul " << j+1 << " = " ;
-            cin >> T[i].chr[j] ;*/
-            f >> T[i].chr[j] ;
-            /**cout << "Cu acest caracter putem pleca in starile ( Se vor citi stari pana la intalnirea valorii -1 ) : " << '\n' ;
-            cin >> x ;*/
-            f >> x ;
-            while( x!=-1 ){
-                T[i].StareFin[j].push_back( x ) ;
-                ///cin >> x ;
-                f >> x ;
+/**
+ *
+ * @param t e un vector de tip AFN ce contine date despre toate tranzitiile posibile ale automatului
+ * @param nrStari = numarul total de stari
+ * @param q0 = starea initiala
+ * @param stFin = vector in care se retin starile finale
+ * @param nrStariFin  = numarul de stari finale
+ */
+
+void citireAutomat(AFN *&t, int &nrStari, int &q0, int *&stFin, int &nrStariFin)
+{
+    int indexi , indexj , aux ;
+    ifstream f( "automat.ini" ) ;
+    /** Citim starea initiala */
+    f >> indexi ;
+    q0 = indexi ;
+    /** Citim nr de stari finale */
+    f >> indexi ;
+    nrStariFin = indexi ;
+    stFin = new int[nrStariFin+1] ;
+    /** Citim starile finale */
+    for( indexi = 0 ; indexi < nrStariFin ; indexi++ )
+        f >> stFin[indexi] ;
+    /** Citim nr total de stari */
+    f >> indexi ;
+    nrStari = indexi ;
+    t = new AFN[nrStari+1] ;
+    for( indexi = 0 ; indexi < nrStari ; indexi++ ){
+        t[indexi].stareInit = indexi+1 ;
+        /**Citim nr de caractere cu care putem pleca din starea i+1 */
+        f >> t[indexi].nrChr ;
+        t[indexi].stareFin.resize(t[indexi].nrChr) ;
+        /** Citim caracterele cu care putem realiza tranzitii */
+        for( indexj = 0 ; indexj < t[indexi].nrChr ; indexj++ ){
+            /** Citim caracterul j+1 pentru starea curenta */
+            f >> t[indexi].chr[indexj] ;
+            /** Citim starile in care putem ajunge cu caracterul curent , pana la intalnirea valorii -1 */
+            f >> aux ;
+            while( aux!=-1 ){
+                t[indexi].stareFin[indexj].push_back( aux ) ;
+                f >> aux ;
             }
         }
     }
     cout << "Automat citit!" << '\n' ;
 }
 
-void delta_prim( AFN *T , int n , queue < int >& MultimeStari , char character )
+/**
+ *
+ * @param t = vectorul de tip AFN ce retine date despre tranzitiile automatului
+ * @param nrStari = numarul de stari
+ * @param multimeStari = multimea de stari din care vom pleca cu tranzitii d*(q,character) . unde q apartine multimestari
+ * @param character = caracterul curent ce se aplica functiei delta *(d*)
+ */
+void deltaPrim(AFN *t, int nrStari, queue<int> &multimeStari, char character)
 {
-    queue < int > C_temp ;
-    while( !MultimeStari.empty() ){
-        int x = MultimeStari.front() ;
-        MultimeStari.pop() ;
-        for( int i = 0 ; i < n ; i++ ){
-            if( T[i].StareInit == x ){
-                for( int j = 0 ; j < T[i].nrchr ; j++ ){
-                    if( T[i].chr[j] == character ){
-                        list < int > L ;
-                        L = T[i].StareFin[j] ;
-                        while( !L.empty() ){
-                            int x = L.front() ;
-                            C_temp.push( x ) ;
-                            L.pop_front() ;
+    queue < int > temp ;
+    while( !multimeStari.empty() ){
+        int aux = multimeStari.front() ;
+        multimeStari.pop() ;
+        for( int indexi = 0 ; indexi < nrStari ; indexi++ ){
+            if( t[indexi].stareInit == aux ){
+                for( int j = 0 ; j < t[indexi].nrChr ; j++ ){
+                    if( t[indexi].chr[j] == character ){
+                        list < int > copie ;
+                        copie = t[indexi].stareFin[j] ;
+                        while( !copie.empty() ){
+                            int x = copie.front() ;
+                            temp.push( x ) ;
+                            copie.pop_front() ;
                         }
                     }
                 }
             }
         }
     }
-    MultimeStari = C_temp ;
+    multimeStari = temp ;
 }
 
-bool delta( AFN *T , int n , int *StF , int nr , queue < int > &MultimeStari , char word[100])
+/**
+ *
+ * @param t = vector de tip AFN ce retine date despre toate tranzitiile posibile in cadrul automatului
+ * @param nrStari = numarul total de stari
+ * @param stFin = vectorul de stari finale
+ * @param nrStariFin = numarul de stari finale
+ * @param multimeStari = multimea de stari pe care aplicam functia delta(d)
+ * @param word = cuvantul introdus in automat si pe care aplicam functia delta(d)
+ * @return true , daca cuvantul este acceptat de automat , false astfel
+ */
+bool delta( AFN *t , int nrStari , int *stFin , int nrStariFin , queue < int >& multimeStari , char word[100])
 {
-    int i , j , x ;
+    int indexi , indexj , aux ;
     if( word[0] == '\0' ){
-        for( i = 0 ; i < MultimeStari.size() ; i++ ){
-            x = MultimeStari.front() ;
-            MultimeStari.pop() ;
-            for( j = 0 ; j < nr ; j++ )
-                if( x == StF[j] )
+        for( indexi = 0 ; indexi <= multimeStari.size() ; indexi++ ){
+            aux = multimeStari.front() ;
+            multimeStari.pop() ;
+            for( indexj = 0 ; indexj < nrStariFin ; indexj++ )
+                if( aux == stFin[indexj] )
                     return true ;
         }
         return false ;
     }
     else {
-        if( MultimeStari.empty() )
+        if( multimeStari.empty() )
             return false ;
         else {
-            char x = word[0] ;
+            char auxiliar = word[0] ;
             strcpy( word , word + 1 ) ;
-            delta_prim( T , n , MultimeStari , x ) ;
-            return delta( T , n , StF , nr , MultimeStari , word ) ;
+            deltaPrim(t, nrStari, multimeStari, auxiliar) ;
+            return delta( t , nrStari , stFin , nrStariFin , multimeStari , word ) ;
         }
     }
 }

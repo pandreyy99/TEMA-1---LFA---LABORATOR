@@ -21,18 +21,18 @@ public:
     AFN();
     AFN ( const AFN& C );
     virtual ~AFN();
-    friend void citire_automat( AFN *&T , int &n , int &q , int *&StF , int &nr ) ;
-    friend bool delta( AFN *T , int n , int *StF , int nr , queue < int > &MultimeStari , char word[100]) ;
-    friend void delta_prim( AFN *T , int n , queue < int >& MultimeStari , char character ) ;
+    friend void citireAutomat(AFN *&t, int &nrStari, int &q0, int *&stFin, int &nrStariFin) ;
+    friend bool delta( AFN *t , int nrStari , int *stFin , int nrStariFin , queue < int > &multimeStari , char word[100]) ;
+    friend void deltaPrim(AFN *t, int nrStari, queue<int> &multimeStari, char character) ;
 
 protected:
 
 private:
-    unsigned int StareInit ;
-    unsigned int nrchr ;
+    unsigned int stareInit ;
+    unsigned int nrChr ;
     char chr[100] ;
-    unsigned int nrstf ;
-    vector < list < int > > StareFin ;
+    unsigned int nrStF ;
+    vector < list < int > > stareFin ;
 };
 
 #endif //LFA_AFN_H
